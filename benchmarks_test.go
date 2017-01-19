@@ -1,7 +1,6 @@
 package gin
 
 import (
-	"html/template"
 	"net/http"
 	"os"
 	"testing"
@@ -58,15 +57,17 @@ func BenchmarkOneRouteJSON(B *testing.B) {
 var htmlContentType = []string{"text/html; charset=utf-8"}
 
 func BenchmarkOneRouteHTML(B *testing.B) {
-	router := New()
-	t := template.Must(template.New("index").Parse(`
-		<html><body><h1>{{.}}</h1></body></html>`))
-	router.SetHTMLTemplate(t)
+	/*
+		router := New()
+		t := template.Must(template.New("index").Parse(`
+			<html><body><h1>{{.}}</h1></body></html>`))
+		router.SetHTMLTemplate(t)
 
-	router.GET("/html", func(c *Context) {
-		c.HTML(200, "index", "hola")
-	})
-	runRequest(B, router, "GET", "/html")
+		router.GET("/html", func(c *Context) {
+			c.HTML(200, "index", "hola")
+		})
+		runRequest(B, router, "GET", "/html")
+	*/
 }
 
 func BenchmarkOneRouteSet(B *testing.B) {

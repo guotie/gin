@@ -5,17 +5,16 @@
 package gin
 
 import (
-	"html/template"
 	"net"
 	"net/http"
 	"os"
 	"sync"
 
-	"github.com/gin-gonic/gin/render"
+	"github.com/guotie/gin/render"
 )
 
 // Version is Framework's version
-const Version = "v1.0rc2"
+const Version = "v1.3"
 
 var default404Body = []byte("404 page not found")
 var default405Body = []byte("405 method not allowed")
@@ -44,7 +43,7 @@ type (
 	// Create an instance of Engine, by using New() or Default()
 	Engine struct {
 		RouterGroup
-		HTMLRender  render.HTMLRender
+		HTMLRender  *render.HTMLRender
 		allNoRoute  HandlersChain
 		allNoMethod HandlersChain
 		noRoute     HandlersChain
@@ -122,15 +121,19 @@ func (engine *Engine) allocateContext() *Context {
 }
 
 func (engine *Engine) LoadHTMLGlob(pattern string) {
-	if IsDebugging() {
-		debugPrintLoadTemplate(template.Must(template.ParseGlob(pattern)))
-		engine.HTMLRender = render.HTMLDebug{Glob: pattern}
-	} else {
-		templ := template.Must(template.ParseGlob(pattern))
-		engine.SetHTMLTemplate(templ)
-	}
+	/*
+		if IsDebugging() {
+			debugPrintLoadTemplate(template.Must(template.ParseGlob(pattern)))
+			engine.HTMLRender = render.HTMLDebug{Glob: pattern}
+		} else {
+			templ := template.Must(template.ParseGlob(pattern))
+			engine.SetHTMLTemplate(templ)
+		}
+	*/
+	engine.HTMLRender = render.LoadTemplate(pattern, IsDebugging())
 }
 
+/*
 func (engine *Engine) LoadHTMLFiles(files ...string) {
 	if IsDebugging() {
 		engine.HTMLRender = render.HTMLDebug{Files: files}
@@ -146,6 +149,7 @@ func (engine *Engine) SetHTMLTemplate(templ *template.Template) {
 	}
 	engine.HTMLRender = render.HTMLProduction{Template: templ}
 }
+*/
 
 // NoRoute adds handlers for NoRoute. It return a 404 code by default.
 func (engine *Engine) NoRoute(handlers ...HandlerFunc) {

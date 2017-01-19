@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin/binding"
-	"github.com/gin-gonic/gin/render"
+	"github.com/guotie/gin/render"
 	"github.com/manucorporat/sse"
 	"golang.org/x/net/context"
 )
@@ -432,9 +432,15 @@ func (c *Context) Render(code int, r render.Render) {
 // HTML renders the HTTP template specified by its file name.
 // It also updates the HTTP code and sets the Content-Type as "text/html".
 // See http://golang.org/doc/articles/wiki/
-func (c *Context) HTML(code int, name string, obj interface{}) {
-	instance := c.engine.HTMLRender.Instance(name, obj)
+func (c *Context) HTML(code int, name string, obj map[string]interface{}) {
+	//instance := c.engine.HTMLRender.Instance(name, obj)
+	//c.Render(code, instance)
+	instance, err := c.engine.HTMLRender.Instance(name, obj)
+	if err != nil {
+		panic(err.Error())
+	}
 	c.Render(code, instance)
+	//c.engine.HTMLRender.Render(code, name,, c.Writer, obj)
 }
 
 // IndentedJSON serializes the given struct as pretty JSON (indented + endlines) into the response body.
@@ -539,7 +545,7 @@ func (c *Context) Negotiate(code int, config Negotiate) {
 
 	case binding.MIMEHTML:
 		data := chooseData(config.HTMLData, config.Data)
-		c.HTML(code, config.HTMLName, data)
+		c.HTML(code, config.HTMLName, data.(map[string]interface{}))
 
 	case binding.MIMEXML:
 		data := chooseData(config.XMLData, config.Data)

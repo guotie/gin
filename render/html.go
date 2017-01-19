@@ -5,62 +5,43 @@
 package render
 
 import (
-	"html/template"
 	"net/http"
+
+	"github.com/flosch/pongo2"
 )
 
 type (
-	HTMLRender interface {
-		Instance(string, interface{}) Render
+	HTMLRender struct {
+		*pongo2.TemplateSet
 	}
-
-	HTMLProduction struct {
-		Template *template.Template
-	}
-
-	HTMLDebug struct {
-		Files []string
-		Glob  string
-	}
-
-	HTML struct {
-		Template *template.Template
-		Name     string
-		Data     interface{}
+	HTMLTemplate struct {
+		tpl     *pongo2.Template
+		context pongo2.Context
 	}
 )
 
 var htmlContentType = []string{"text/html; charset=utf-8"}
 
-func (r HTMLProduction) Instance(name string, data interface{}) Render {
-	return HTML{
-		Template: r.Template,
-		Name:     name,
-		Data:     data,
-	}
+// LoadTemplate load template from dir
+func LoadTemplate(dir string, debug bool) *HTMLRender {
+	loader := pongo2.MustNewLocalFileSystemLoader(dir)
+	ts := pongo2.NewSet("gin", loader)
+	ts.Debug = debug
+	return &HTMLRender{ts}
 }
 
-func (r HTMLDebug) Instance(name string, data interface{}) Render {
-	return HTML{
-		Template: r.loadTemplate(),
-		Name:     name,
-		Data:     data,
+// Instance return HTMLTemplate
+func (r *HTMLRender) Instance(name string, context map[string]interface{}) (*HTMLTemplate, error) {
+	tpl, err := r.FromCache(name)
+	if err != nil {
+		return nil, err
 	}
-}
-func (r HTMLDebug) loadTemplate() *template.Template {
-	if len(r.Files) > 0 {
-		return template.Must(template.ParseFiles(r.Files...))
-	}
-	if len(r.Glob) > 0 {
-		return template.Must(template.ParseGlob(r.Glob))
-	}
-	panic("the HTML debug render was created without files or glob pattern")
+
+	return &HTMLTemplate{tpl, pongo2.Context(context)}, nil
 }
 
-func (r HTML) Render(w http.ResponseWriter) error {
-	writeContentType(w, htmlContentType)
-	if len(r.Name) == 0 {
-		return r.Template.Execute(w, r.Data)
-	}
-	return r.Template.ExecuteTemplate(w, r.Name, r.Data)
+// Render render pongo2 template
+func (r *HTMLTemplate) Render(w http.ResponseWriter) error {
+	err := r.tpl.ExecuteWriter(r.context, w)
+	return err
 }
